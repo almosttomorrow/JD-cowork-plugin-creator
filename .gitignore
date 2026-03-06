@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local env (never commit — set ANTHROPIC_API_KEY in Netlify dashboard instead)
+.env
+.env.local
+
+# Netlify
+.netlify/
+
+# OS
+.DS_Store
+Thumbs.db
