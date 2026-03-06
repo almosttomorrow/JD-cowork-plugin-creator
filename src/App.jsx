@@ -5,6 +5,7 @@ import ProgressLog from './components/ProgressLog.jsx';
 import FileTreePreview from './components/FileTreePreview.jsx';
 import DownloadButton from './components/DownloadButton.jsx';
 import HowToUse from './components/HowToUse.jsx';
+import PluginSummary from './components/PluginSummary.jsx';
 import { startGeneration, pollStatus } from './lib/api.js';
 
 const POLL_INTERVAL = 1500;
@@ -166,9 +167,10 @@ export default function App() {
             <span className="step-number done">✓</span>
             <span>Your plugin is ready</span>
           </div>
-          <div className="panel result-panel">
+          <PluginSummary result={result} namespace={namespace} />
+          <DownloadButton result={result} />
+          <div className="panel result-panel" style={{ marginTop: 16 }}>
             <FileTreePreview result={result} />
-            <DownloadButton result={result} />
           </div>
           <HowToUse result={result} namespace={namespace} />
           <button className="reset-btn reset-btn--secondary" onClick={reset}>
