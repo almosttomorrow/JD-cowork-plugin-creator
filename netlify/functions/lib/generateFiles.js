@@ -6,7 +6,7 @@ import {
   connectorsUser, readmeUser,
 } from './prompts.js';
 
-const client = new Anthropic();
+const client = new Anthropic({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * Generates all plugin files for a given plugin schema.

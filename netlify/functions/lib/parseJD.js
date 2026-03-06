@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { PARSE_JD_SYSTEM, parseJDUser } from './prompts.js';
 
-const client = new Anthropic();
+const client = new Anthropic({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * Parses a job description into a structured role profile.

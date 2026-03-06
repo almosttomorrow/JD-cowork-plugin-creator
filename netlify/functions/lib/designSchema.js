@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { DESIGN_SCHEMA_SYSTEM, designSchemaUser } from './prompts.js';
 
-const client = new Anthropic();
+const client = new Anthropic({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * Designs the full plugin schema from a role profile.

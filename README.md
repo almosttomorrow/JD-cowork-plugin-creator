@@ -45,10 +45,10 @@ npm install
 
 # 2. Set your API key
 # In Netlify dashboard → Site settings → Environment variables, add:
-#   ANTHROPIC_API_KEY = sk-ant-...
+#   OPENAI_API_KEY = sk-ant-...
 #
 # For local dev, create a .env file:
-echo "ANTHROPIC_API_KEY=sk-ant-..." > .env
+echo "OPENAI_API_KEY=sk-ant-..." > .env
 
 # 3. Start the dev server (runs both Vite and Netlify Functions)
 npm run dev
@@ -59,9 +59,9 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key — set in Netlify dashboard under Environment Variables |
+| `OPENAI_API_KEY` | Yes | Your Anthropic API key — set in Netlify dashboard under Environment Variables |
 
-The Anthropic SDK reads `ANTHROPIC_API_KEY` automatically. No other configuration is needed.
+The Anthropic SDK reads `OPENAI_API_KEY` automatically. No other configuration is needed.
 
 ## Deploy to Netlify
 
@@ -76,7 +76,7 @@ npm install -g netlify-cli
 netlify deploy --prod
 ```
 
-Set `ANTHROPIC_API_KEY` in **Netlify dashboard → Site configuration → Environment variables** before deploying.
+Set `OPENAI_API_KEY` in **Netlify dashboard → Site configuration → Environment variables** before deploying.
 
 ## How it works
 
