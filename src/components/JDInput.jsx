@@ -29,35 +29,35 @@ export default function JDInput({ jd, onJdChange, disabled }) {
     <div>
       <div className="input-mode">
         <button
-          className={`mode-btn${mode === 'text' ? ' active' : ''}`}
+          className={'mode-btn' + (mode === 'text' ? ' active' : '')}
           onClick={() => setMode('text')}
           disabled={disabled}
         >
           Paste JD text
         </button>
         <button
-          className={`mode-btn${mode === 'url' ? ' active' : ''}`}
+          className={'mode-btn' + (mode === 'url' ? ' active' : '')}
           onClick={() => setMode('url')}
           disabled={disabled}
         >
-          Enter URL
+          Fetch from URL
         </button>
       </div>
 
       {mode === 'text' ? (
         <>
           <textarea
-            placeholder="Paste your job description here..."
+            placeholder="Paste the full job description here. The more detail, the better the plugin — responsibilities, tools, workflows, team context."
             value={jd}
             onChange={e => onJdChange(e.target.value)}
             disabled={disabled}
             spellCheck={false}
           />
           {tooShort && (
-            <div className="url-error">Job description must be at least 100 characters.</div>
+            <div className="field-error">Needs at least 100 characters — paste the full job description.</div>
           )}
           {charCount > 0 && (
-            <div className="char-count">{charCount.toLocaleString()} characters</div>
+            <div className="char-count">{charCount.toLocaleString()} chars{charCount >= 100 ? ' ✓' : ''}</div>
           )}
         </>
       ) : (
@@ -66,7 +66,7 @@ export default function JDInput({ jd, onJdChange, disabled }) {
             <input
               type="url"
               className="url-input"
-              placeholder="https://company.com/jobs/role-name"
+              placeholder="https://company.com/jobs/role-title"
               value={url}
               onChange={e => setUrl(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleFetchUrl()}
@@ -77,13 +77,14 @@ export default function JDInput({ jd, onJdChange, disabled }) {
               onClick={handleFetchUrl}
               disabled={!url.trim() || disabled || fetching}
             >
-              {fetching ? 'Fetching...' : 'Fetch'}
+              {fetching ? 'Fetching…' : 'Fetch'}
             </button>
           </div>
           {urlError && <div className="url-error">{urlError}</div>}
+          {!urlError && <div className="field-hint">Fetches the page and extracts the text. Switch to "Paste JD text" to review it.</div>}
           {jd && (
             <div className="char-count" style={{ marginTop: 8 }}>
-              Fetched {jd.length.toLocaleString()} characters
+              Fetched {jd.length.toLocaleString()} chars ✓
             </div>
           )}
         </>

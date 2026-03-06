@@ -6,10 +6,11 @@ export default function OptionsPanel({
   disabled,
 }) {
   const namespaceInvalid = namespace.length > 0 && !NAMESPACE_PATTERN.test(namespace);
+  const showPreview = namespace.length > 0 && !namespaceInvalid;
 
   return (
     <div>
-      <div className="options-row">
+      <div className="options-grid">
         <div className="field">
           <label htmlFor="namespace">Namespace</label>
           <input
@@ -23,9 +24,15 @@ export default function OptionsPanel({
             disabled={disabled}
           />
           {namespaceInvalid && (
-            <div className="field-error">Lowercase letters, numbers, hyphens. Max 10 chars.</div>
+            <div className="field-error">Lowercase letters, numbers, hyphens only. Must start with a letter.</div>
+          )}
+          {showPreview ? (
+            <div className="field-preview">/{namespace}:command-name</div>
+          ) : (
+            <div className="field-desc">Prefix for your plugin's commands</div>
           )}
         </div>
+
         <div className="field">
           <label htmlFor="author">Author</label>
           <input
@@ -36,19 +43,26 @@ export default function OptionsPanel({
             onChange={e => onAuthorChange(e.target.value)}
             disabled={disabled}
           />
+          <div className="field-desc">Goes into plugin.json metadata</div>
         </div>
       </div>
 
-      <label className="toggle-row">
-        <input
-          type="checkbox"
-          checked={dual}
-          onChange={e => onDualChange(e.target.checked)}
-          disabled={disabled}
-        />
-        <span className="toggle-label">
-          Generate <strong>companion plugin</strong> for the team they serve
-        </span>
+      <label className="dual-toggle">
+        <div className="dual-toggle-row">
+          <input
+            type="checkbox"
+            checked={dual}
+            onChange={e => onDualChange(e.target.checked)}
+            disabled={disabled}
+          />
+          <div className="dual-toggle-text">
+            <strong>Generate companion plugin</strong>
+            <span>
+              Creates a second plugin for the team this person serves — e.g. if the JD is for
+              a Sales Enablement Lead, also generate a plugin for their sales reps.
+            </span>
+          </div>
+        </div>
       </label>
     </div>
   );

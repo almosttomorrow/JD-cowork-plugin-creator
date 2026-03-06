@@ -12,16 +12,16 @@ function LogEntry({ line }) {
   if (line.startsWith('→')) {
     return (
       <div className="log-entry">
-        <span className="log-icon-progress">→</span>
+        <span className="log-icon-progress">›</span>
         <span className="log-text-muted">{line.slice(1).trim()}</span>
       </div>
     );
   }
-  if (line.startsWith('✗') || line.toLowerCase().includes('error')) {
+  if (line.startsWith('✗')) {
     return (
       <div className="log-entry">
         <span className="log-icon-error">✗</span>
-        <span className="log-text">{line.slice(1).trim() || line}</span>
+        <span className="log-text">{line.slice(1).trim()}</span>
       </div>
     );
   }
@@ -43,8 +43,8 @@ export default function ProgressLog({ logs, running }) {
     <div className="progress-log">
       {logs.length === 0 && running && (
         <div className="log-entry">
-          <span className="log-icon-progress">→</span>
-          <span className="log-text-muted">Starting generation…</span>
+          <span className="log-icon-progress">›</span>
+          <span className="log-text-muted">Starting…</span>
         </div>
       )}
       {logs.map((line, i) => (

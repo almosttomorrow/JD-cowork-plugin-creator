@@ -21,7 +21,14 @@ const client = new Anthropic();
 export async function generateFiles(pluginSchema, roleProfile, author, onProgress) {
   const files = [];
   const { roleTitle, summary, domainKnowledge = [], regions = [], segments = [] } = roleProfile;
-  const { name, namespace, description, commands, skills, connectors = [] } = pluginSchema;
+  const {
+    name,
+    namespace,
+    description,
+    commands = [],
+    skills = [],
+    connectors = [],
+  } = pluginSchema;
 
   // 3a. plugin.json — no LLM needed
   files.push({
@@ -35,7 +42,7 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
   });
   onProgress(`✓ Generated .claude-plugin/plugin.json`);
 
-  // 3b. .mcp.json — map connectors through registry
+  // 3b. .mcp.json — map connectors through registry; omit unknowns
   const resolvedConnectors = {};
   const unknownConnectors = [];
 
@@ -94,25 +101,29 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
     }
   }
 
-  // 3e. CONNECTORS.md — one LLM call
-  if (connectors.length > 0) {
-    onProgress(`→ Generating CONNECTORS.md…`);
-    try {
-      const knownKeys = Object.keys(resolvedConnectors);
-      const allConnectors = [...knownKeys, ...unknownConnectors];
-      let content = await callClaude(
+  // 3e. CONNECTORS.md — always generate; note unknown connectors
+  onProgress(`→ Generating CONNECTORS.md…`);
+  try {
+    const knownKeys = Object.keys(resolvedConnectors);
+    const allConnectors = [...knownKeys, ...unknownConnectors];
+
+    let content;
+    if (allConnectors.length > 0) {
+      content = await callClaude(
         null,
         connectorsUser(name, namespace, roleTitle, allConnectors, commandsByConnector)
       );
-      // Append note about unknown connectors if any
       if (unknownConnectors.length > 0) {
-        content += `\n\n---\n\n> **Note:** The following connectors were mentioned in the JD but are not yet in the MCP registry. URLs need to be confirmed before use: ${unknownConnectors.join(', ')}.`;
+        content += `\n\n---\n\n> **Note:** The following connectors were mentioned in the job description but are not yet in the MCP registry. Confirm the MCP URLs before use: ${unknownConnectors.join(', ')}.`;
       }
-      files.push({ path: 'CONNECTORS.md', content });
-      onProgress(`✓ Generated CONNECTORS.md`);
-    } catch (err) {
-      onProgress(`✗ Skipped CONNECTORS.md (${err.message})`);
+    } else {
+      content = `# Connectors\n\nThis plugin has no connectors configured. All commands run in standalone mode using Claude's context and your manual inputs.\n\nTo add connectors later, edit \`.mcp.json\` and add MCP server entries.\n`;
     }
+
+    files.push({ path: 'CONNECTORS.md', content });
+    onProgress(`✓ Generated CONNECTORS.md`);
+  } catch (err) {
+    onProgress(`✗ Skipped CONNECTORS.md (${err.message})`);
   }
 
   // 3f. README.md — one LLM call
@@ -137,5 +148,9 @@ async function callClaude(system, userContent) {
   if (system) params.system = system;
 
   const message = await client.messages.create(params);
-  return message.content[0].text;
+  const block = message.content[0];
+  if (!block || block.type !== 'text') {
+    throw new Error('Unexpected response format from Claude API');
+  }
+  return block.text;
 }
