@@ -1,7 +1,7 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { PARSE_JD_SYSTEM, parseJDUser } from './prompts.js';
 
-const client = new Anthropic({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * Parses a job description into a structured role profile.
@@ -30,13 +30,16 @@ export async function parseJD(jdText) {
 }
 
 async function callClaude(system, userContent) {
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+  const messages = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: userContent });
+
+  const completion = await client.chat.completions.create({
+    model: 'gpt-4o',
     max_tokens: 2048,
-    system,
-    messages: [{ role: 'user', content: userContent }],
+    messages,
   });
-  return message.content[0].text;
+  return completion.choices[0].message.content;
 }
 
 function extractJSON(text) {

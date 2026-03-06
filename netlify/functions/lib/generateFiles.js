@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { resolveConnector, getMcpUrl } from './mcpRegistry.js';
 import {
   COMMAND_SYSTEM, commandUser,
@@ -6,7 +6,7 @@ import {
   connectorsUser, readmeUser,
 } from './prompts.js';
 
-const client = new Anthropic({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 /**
  * Generates all plugin files for a given plugin schema.
@@ -140,17 +140,16 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
 }
 
 async function callClaude(system, userContent) {
-  const params = {
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: userContent }],
-  };
-  if (system) params.system = system;
+  const messages = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: userContent });
 
-  const message = await client.messages.create(params);
-  const block = message.content[0];
-  if (!block || block.type !== 'text') {
-    throw new Error('Unexpected response format from Claude API');
-  }
-  return block.text;
+  const completion = await client.chat.completions.create({
+    model: 'gpt-4o',
+    max_tokens: 4096,
+    messages,
+  });
+  const text = completion.choices[0].message.content;
+  if (!text) throw new Error('Unexpected response format from OpenAI API');
+  return text;
 }
