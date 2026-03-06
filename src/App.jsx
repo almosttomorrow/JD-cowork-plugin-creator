@@ -84,21 +84,21 @@ export default function App() {
           <span className="app-logo">⬡</span>
           <h1>PluginForge</h1>
         </div>
-        <p className="app-tagline">Paste a job description. Get a Claude Code plugin.</p>
+        <p className="app-tagline">Turn any job description into a ready-to-use AI assistant for Claude Code.</p>
       </header>
 
       <div className="explainer">
         <p>
-          <strong>Cowork plugins</strong> add slash commands and domain knowledge to Claude Code — tuned for a
-          specific role. PluginForge reads a job description and generates a complete, ready-to-install plugin
-          with commands, skills, and connector configs in seconds.
+          <strong>How it works:</strong> Paste a job description (or link to one) and PluginForge builds
+          a personalised AI assistant — with shortcuts, role knowledge, and tool connections — that your
+          team can install in Claude Code and start using straight away. No coding needed.
         </p>
       </div>
 
       <section className="step-section">
         <div className="step-label">
           <span className="step-number">1</span>
-          <span>Paste the job description</span>
+          <span>Add the job description</span>
         </div>
         <div className="panel">
           <JDInput jd={jd} onJdChange={setJd} disabled={phase === 'generating'} />
@@ -108,7 +108,7 @@ export default function App() {
       <section className="step-section">
         <div className="step-label">
           <span className="step-number">2</span>
-          <span>Configure your plugin</span>
+          <span>Name your assistant</span>
         </div>
         <div className="panel">
           <OptionsPanel
@@ -126,25 +126,25 @@ export default function App() {
       <section className="step-section">
         <div className="step-label">
           <span className="step-number">3</span>
-          <span>Generate</span>
+          <span>Build your assistant</span>
         </div>
 
         {phase === 'idle' && (
           <div className="generate-hints">
-            <HintRow ok={jdReady} text={jdReady ? 'Job description ready' : 'Paste at least 100 characters'} />
-            <HintRow ok={namespaceValid} text={namespaceValid ? `Namespace: /${namespace}:command` : 'Enter a namespace (e.g. sales)'} />
+            <HintRow ok={jdReady} text={jdReady ? 'Job description ready' : 'Add the job description above (step 1)'} />
+            <HintRow ok={namespaceValid} text={namespaceValid ? `Shortcut prefix set: /${namespace}:…` : 'Choose a shortcut prefix above (step 2)'} />
           </div>
         )}
 
         {phase === 'idle' && (
           <button className="generate-btn" onClick={handleGenerate} disabled={!canGenerate}>
-            Generate Plugin
+            Build My Assistant
           </button>
         )}
 
         {phase === 'generating' && (
           <button className="generate-btn generate-btn--loading" disabled>
-            <span className="spinner" /> Generating…
+            <span className="spinner" /> Building your assistant…
           </button>
         )}
 
@@ -160,7 +160,7 @@ export default function App() {
         <section className="step-section">
           <div className="step-label">
             <span className="step-number dot" />
-            <span>Progress</span>
+            <span>Building…</span>
           </div>
           <ProgressLog logs={logs} running={phase === 'generating'} />
         </section>
@@ -170,7 +170,7 @@ export default function App() {
         <section className="step-section">
           <div className="step-label">
             <span className="step-number done">✓</span>
-            <span>Plugin ready</span>
+            <span>Your assistant is ready</span>
           </div>
           <div className="panel result-panel">
             <FileTreePreview result={result} />
@@ -178,7 +178,7 @@ export default function App() {
           </div>
           <HowToUse result={result} namespace={namespace} />
           <button className="reset-btn reset-btn--secondary" onClick={reset}>
-            ← Generate another plugin
+            ← Build another assistant
           </button>
         </section>
       )}

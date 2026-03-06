@@ -33,28 +33,28 @@ export default function JDInput({ jd, onJdChange, disabled }) {
           onClick={() => setMode('text')}
           disabled={disabled}
         >
-          Paste JD text
+          Paste text
         </button>
         <button
           className={'mode-btn' + (mode === 'url' ? ' active' : '')}
           onClick={() => setMode('url')}
           disabled={disabled}
         >
-          Fetch from URL
+          Use a URL
         </button>
       </div>
 
       {mode === 'text' ? (
         <>
           <textarea
-            placeholder="Paste the full job description here. The more detail, the better the plugin — responsibilities, tools, workflows, team context."
+            placeholder="Paste the full job description here. Include responsibilities, tools, team structure, and workflows — the more context, the better your assistant will be."
             value={jd}
             onChange={e => onJdChange(e.target.value)}
             disabled={disabled}
             spellCheck={false}
           />
           {tooShort && (
-            <div className="field-error">Needs at least 100 characters — paste the full job description.</div>
+            <div className="field-error">The job description looks a bit short — paste the full text for best results.</div>
           )}
           {charCount > 0 && (
             <div className="char-count">{charCount.toLocaleString()} chars{charCount >= 100 ? ' ✓' : ''}</div>
@@ -81,7 +81,7 @@ export default function JDInput({ jd, onJdChange, disabled }) {
             </button>
           </div>
           {urlError && <div className="url-error">{urlError}</div>}
-          {!urlError && <div className="field-hint">Fetches the page and extracts the text. Switch to "Paste JD text" to review it.</div>}
+          {!urlError && <div className="field-hint">We'll extract the job description text from the page automatically. Switch to "Paste text" to review it first.</div>}
           {jd && (
             <div className="char-count" style={{ marginTop: 8 }}>
               Fetched {jd.length.toLocaleString()} chars ✓

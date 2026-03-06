@@ -12,7 +12,7 @@ export default function OptionsPanel({
     <div>
       <div className="options-grid">
         <div className="field">
-          <label htmlFor="namespace">Namespace</label>
+          <label htmlFor="namespace">Shortcut prefix</label>
           <input
             id="namespace"
             type="text"
@@ -24,26 +24,26 @@ export default function OptionsPanel({
             disabled={disabled}
           />
           {namespaceInvalid && (
-            <div className="field-error">Lowercase letters, numbers, hyphens only. Must start with a letter.</div>
+            <div className="field-error">Use lowercase letters and hyphens only, e.g. "sales".</div>
           )}
           {showPreview ? (
             <div className="field-preview">/{namespace}:command-name</div>
           ) : (
-            <div className="field-desc">Prefix for your plugin's commands</div>
+            <div className="field-desc">The word your team types to use this assistant, e.g. "sales"</div>
           )}
         </div>
 
         <div className="field">
-          <label htmlFor="author">Author</label>
+          <label htmlFor="author">Your name</label>
           <input
             id="author"
             type="text"
-            placeholder="your-name"
+            placeholder="Jane Smith"
             value={author}
             onChange={e => onAuthorChange(e.target.value)}
             disabled={disabled}
           />
-          <div className="field-desc">Goes into plugin.json metadata</div>
+          <div className="field-desc">Optional — added to the assistant for reference</div>
         </div>
       </div>
 
@@ -56,10 +56,10 @@ export default function OptionsPanel({
             disabled={disabled}
           />
           <div className="dual-toggle-text">
-            <strong>Generate companion plugin</strong>
+            <strong>Also build an assistant for their team</strong>
             <span>
-              Creates a second plugin for the team this person serves — e.g. if the JD is for
-              a Sales Enablement Lead, also generate a plugin for their sales reps.
+              Creates a second assistant for the people this role works with — e.g. for a Sales Enablement Lead,
+              also build one for their sales reps.
             </span>
           </div>
         </div>

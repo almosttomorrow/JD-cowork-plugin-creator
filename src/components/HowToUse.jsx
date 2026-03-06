@@ -5,61 +5,58 @@ export default function HowToUse({ result, namespace }) {
   const plugin = result?.plugins?.[0];
   const isDual = result?.plugins?.length > 1;
   const ns = namespace || plugin?.name || 'yourns';
-  // Find first command name as an example
   const exampleCmd = getFirstCommand(plugin);
 
   return (
     <div className="how-to-use">
-      <div className="how-to-use-title">How to install your plugin</div>
+      <div className="how-to-use-title">How to install and start using it</div>
       <ol className="how-to-use-steps">
         <li>
           <span className="step-n">1</span>
           <div>
-            <strong>Unzip the download.</strong>{' '}
-            You'll get {isDual ? 'two plugin folders' : 'a plugin folder'} —
-            {' '}<code>{plugin?.name || 'role-slug'}/</code>{isDual ? ' and a companion' : ''}.
+            <strong>Download and unzip the file.</strong>{' '}
+            You'll see {isDual ? 'two folders — one for the role and one for their team' : 'a folder'} with everything inside.
           </div>
         </li>
         <li>
           <span className="step-n">2</span>
           <div>
-            <strong>Move it to your Claude Code plugins directory.</strong>{' '}
-            The standard path is{' '}
-            <code>~/.claude/plugins/{plugin?.name || 'role-slug'}/</code>.
-            If the directory doesn't exist, create it.
+            <strong>Move the folder into Claude Code's plugins directory.</strong>{' '}
+            Copy it to <code>~/.claude/plugins/{plugin?.name || 'your-assistant'}/</code> on your computer.
+            {' '}(Create the <code>plugins</code> folder if it doesn't exist yet.)
           </div>
         </li>
         <li>
           <span className="step-n">3</span>
           <div>
-            <strong>Load the plugin.</strong>{' '}
-            In Claude Code, run <code>/plugins:reload</code> (or restart the app).
-            Your new commands will be available immediately.
+            <strong>Load it in Claude Code.</strong>{' '}
+            Type <code>/plugins:reload</code> in Claude Code, or simply restart the app.
+            Your new shortcuts will be ready to use straight away.
           </div>
         </li>
         <li>
           <span className="step-n">4</span>
           <div>
-            <strong>Try your first command.</strong>{' '}
-            Type <code>/{ns}:</code> and press Tab to see all available commands.
-            {exampleCmd && <>{' '}Start with <code>/{ns}:{exampleCmd}</code>.</>}
+            <strong>Try it out.</strong>{' '}
+            Type <code>/{ns}:</code> and press Tab to see all your new shortcuts.
+            {exampleCmd && <>{' '}A good one to start with: <code>/{ns}:{exampleCmd}</code>.</>}
           </div>
         </li>
         {isDual && (
           <li>
             <span className="step-n">5</span>
             <div>
-              <strong>Install the companion plugin too.</strong>{' '}
-              Move the companion folder to the same plugins directory and reload.
-              Share it with the team who'll use it.
+              <strong>Share the team assistant too.</strong>{' '}
+              Install the second folder the same way and share it with the team.
+              They'll get their own set of shortcuts built around how they work.
             </div>
           </li>
         )}
       </ol>
       <div className="how-to-use-note">
-        <strong>Connectors (optional):</strong> Check <code>CONNECTORS.md</code> in your plugin
-        to connect tools like Google Drive, Salesforce, or Gong. Each connector is optional —
-        commands work without them, but become much more powerful when connected.
+        <strong>Connect your tools (optional):</strong> Open <code>CONNECTORS.md</code> inside the folder to see
+        which tools — like Google Drive, Salesforce, or Slack — can be linked up. Each one is optional,
+        but connecting them makes your assistant significantly more useful.
       </div>
     </div>
   );
