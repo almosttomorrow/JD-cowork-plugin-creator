@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { fetchUrlContent } from '../lib/api.js';
 
 export default function JDInput({ jd, onJdChange, disabled }) {
-  const [mode, setMode] = useState('text'); // 'text' | 'url'
+  const [mode, setMode] = useState('url'); // 'url' | 'text'
   const [url, setUrl] = useState('');
   const [fetching, setFetching] = useState(false);
   const [urlError, setUrlError] = useState('');

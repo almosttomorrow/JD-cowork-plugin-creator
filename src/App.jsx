@@ -14,7 +14,6 @@ export default function App() {
   const [jd, setJd] = useState('');
   const [namespace, setNamespace] = useState('');
   const [author, setAuthor] = useState('');
-  const [dual, setDual] = useState(false);
 
   const [phase, setPhase] = useState('idle'); // idle | generating | complete | error
   const [logs, setLogs] = useState([]);
@@ -49,7 +48,7 @@ export default function App() {
 
     let jobId;
     try {
-      jobId = await startGeneration({ jd: jd.trim(), namespace: namespace.trim(), author: author.trim(), dual });
+      jobId = await startGeneration({ jd: jd.trim(), namespace: namespace.trim(), author: author.trim() });
     } catch {
       setPhase('error');
       setErrorMsg('Failed to start generation. Check your connection and try again.');
@@ -67,9 +66,9 @@ export default function App() {
         } else if (data.status === 'error') {
           stopPolling();
           setPhase('error');
-          setErrorMsg(data.error || 'Generation failed — please try again.');
+          setErrorMsg(data.error || 'Generation failed. Please try again.');
         }
-      } catch { /* network blip — keep polling */ }
+      } catch { /* network blip, keep polling */ }
     }, POLL_INTERVAL);
   };
 
@@ -90,7 +89,7 @@ export default function App() {
       <div className="explainer">
         <p>
           <strong>How it works:</strong> Paste a job description (or link to one) and PluginForge builds
-          a personalised AI assistant — with shortcuts, role knowledge, and tool connections — that your
+          a personalised AI assistant with shortcuts, role knowledge, and tool connections that your
           team can install in Claude Code and start using straight away. No coding needed.
         </p>
       </div>
@@ -114,10 +113,8 @@ export default function App() {
           <OptionsPanel
             namespace={namespace}
             author={author}
-            dual={dual}
             onNamespaceChange={setNamespace}
             onAuthorChange={setAuthor}
-            onDualChange={setDual}
             disabled={phase === 'generating'}
           />
         </div>
@@ -125,52 +122,49 @@ export default function App() {
 
       <section className="step-section">
         <div className="step-label">
-          <span className="step-number">3</span>
-          <span>Build your assistant</span>
+          <span className={`step-number${phase === 'generating' ? ' dot' : ''}`}>
+            {phase === 'generating' ? '' : '3'}
+          </span>
+          <span>{phase === 'generating' ? 'Building your plugin...' : 'Build your plugin'}</span>
         </div>
 
         {phase === 'idle' && (
           <div className="generate-hints">
             <HintRow ok={jdReady} text={jdReady ? 'Job description ready' : 'Add the job description above (step 1)'} />
-            <HintRow ok={namespaceValid} text={namespaceValid ? `Shortcut prefix set: /${namespace}:…` : 'Choose a shortcut prefix above (step 2)'} />
+            <HintRow ok={namespaceValid} text={namespaceValid ? `Shortcut prefix set: /${namespace}:...` : 'Choose a shortcut prefix above (step 2)'} />
           </div>
         )}
 
         {phase === 'idle' && (
           <button className="generate-btn" onClick={handleGenerate} disabled={!canGenerate}>
-            Build My Assistant
+            Build Plugin
           </button>
         )}
 
         {phase === 'generating' && (
-          <button className="generate-btn generate-btn--loading" disabled>
-            <span className="spinner" /> Building your assistant…
-          </button>
+          <>
+            <button className="generate-btn generate-btn--loading" disabled>
+              <span className="spinner" /> Building plugin...
+            </button>
+            <div style={{ marginTop: 16 }}>
+              <ProgressLog logs={logs} running={true} />
+            </div>
+          </>
         )}
 
         {phase === 'error' && (
           <>
             <div className="error-box">{errorMsg}</div>
-            <button className="reset-btn" onClick={reset}>← Try Again</button>
+            <button className="reset-btn" onClick={reset}>Try Again</button>
           </>
         )}
       </section>
-
-      {(phase === 'generating' || (logs.length > 0 && phase !== 'error')) && (
-        <section className="step-section">
-          <div className="step-label">
-            <span className="step-number dot" />
-            <span>Building…</span>
-          </div>
-          <ProgressLog logs={logs} running={phase === 'generating'} />
-        </section>
-      )}
 
       {phase === 'complete' && result && (
         <section className="step-section">
           <div className="step-label">
             <span className="step-number done">✓</span>
-            <span>Your assistant is ready</span>
+            <span>Your plugin is ready</span>
           </div>
           <div className="panel result-panel">
             <FileTreePreview result={result} />
@@ -178,7 +172,7 @@ export default function App() {
           </div>
           <HowToUse result={result} namespace={namespace} />
           <button className="reset-btn reset-btn--secondary" onClick={reset}>
-            ← Build another assistant
+            Build another plugin
           </button>
         </section>
       )}

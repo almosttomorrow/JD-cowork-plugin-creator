@@ -2,14 +2,14 @@
  * Starts plugin generation. Returns a jobId immediately.
  * The frontend polls /api/status?jobId=xxx for progress.
  */
-export async function startGeneration({ jd, namespace, author, dual }) {
+export async function startGeneration({ jd, namespace, author }) {
   const jobId = crypto.randomUUID();
 
   // Fire the request — background function returns 202 with no body
   await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jd, namespace, author, dual, jobId }),
+    body: JSON.stringify({ jd, namespace, author, jobId }),
   });
 
   return jobId;

@@ -314,7 +314,6 @@ textarea:disabled {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
-  margin-bottom: 20px;
 }
 
 .field label {
@@ -563,9 +562,16 @@ textarea:disabled {
 .log-icon-done     { color: var(--green); flex-shrink: 0; }
 .log-icon-progress { color: var(--yellow); flex-shrink: 0; }
 .log-icon-error    { color: var(--red); flex-shrink: 0; }
+.log-icon-step     { color: var(--accent); flex-shrink: 0; font-size: 10px; }
+.log-icon-sub      { color: var(--border-2); flex-shrink: 0; margin-left: 14px; }
 
-.log-text       { color: var(--text); }
-.log-text-muted { color: var(--text-muted); }
+.log-text        { color: var(--text); }
+.log-text-muted  { color: var(--text-muted); }
+.log-text-step   { color: var(--text); font-weight: 600; }
+
+.log-entry--step { margin-top: 4px; }
+.log-entry--step:first-child { margin-top: 0; }
+.log-entry--sub  { opacity: 0.8; }
 
 .progress-log::-webkit-scrollbar { width: 4px; }
 .progress-log::-webkit-scrollbar-track { background: transparent; }

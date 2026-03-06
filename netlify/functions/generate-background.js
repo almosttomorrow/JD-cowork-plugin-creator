@@ -1,7 +1,7 @@
 /**
  * Netlify Background Function: generate-background
  *
- * Accepts a POST request with { jd, namespace, author, dual, jobId }.
+ * Accepts a POST request with { jd, namespace, author, jobId }.
  * Netlify automatically returns 202 to the client and continues running
  * this function in the background (up to 15 minutes).
  *
@@ -12,6 +12,7 @@
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import OpenAI from 'openai';
 import { parseJD } from './lib/parseJD.js';
 import { designSchema } from './lib/designSchema.js';
 import { generateFiles } from './lib/generateFiles.js';
@@ -53,7 +54,7 @@ export const handler = async (event) => {
     return { statusCode: 400, body: 'Invalid JSON' };
   }
 
-  const { jd, namespace, author, dual, jobId } = body;
+  const { jd, namespace, author, jobId } = body;
 
   if (!jd || !namespace || !jobId) {
     return { statusCode: 400, body: 'Missing required fields: jd, namespace, jobId' };
@@ -63,59 +64,54 @@ export const handler = async (event) => {
   writeStatus(jobId, { status: 'processing', logs: [], result: null });
 
   try {
+    // Step 0: Verify OpenAI connection
+    appendLog(jobId, '◆ Connecting to OpenAI...');
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const testCompletion = await client.chat.completions.create({
+      model: 'gpt-4o',
+      max_tokens: 5,
+      messages: [{ role: 'user', content: 'ping' }],
+    });
+    if (!testCompletion.choices?.[0]) throw new Error('No response from OpenAI');
+    appendLog(jobId, '✓ Connected (gpt-4o ready)');
+
     // Step 1: Parse JD
-    appendLog(jobId, '→ Parsing job description…');
+    appendLog(jobId, '◆ Reading job description...');
     const roleProfile = await parseJD(jd);
-    appendLog(jobId, `✓ Parsed role profile: ${roleProfile.roleTitle}`);
-
-    // Step 2: Design plugin schema
-    appendLog(jobId, '→ Designing plugin schema…');
-    const schemaResult = await designSchema(roleProfile, namespace, author, dual);
-    const { primaryPlugin, companionPlugin } = schemaResult;
-
-    const primaryCmdCount = primaryPlugin.commands?.length || 0;
-    const primarySkillCount = primaryPlugin.skills?.length || 0;
-    appendLog(jobId, `✓ Designed primary schema: ${primaryCmdCount} commands, ${primarySkillCount} skills`);
-
-    if (companionPlugin) {
-      const compCmdCount = companionPlugin.commands?.length || 0;
-      const compSkillCount = companionPlugin.skills?.length || 0;
-      appendLog(jobId, `✓ Designed companion schema: ${compCmdCount} commands, ${compSkillCount} skills`);
+    appendLog(jobId, `✓ Role identified: ${roleProfile.roleTitle}`);
+    if (roleProfile.summary) {
+      appendLog(jobId, `  · ${roleProfile.summary.slice(0, 100)}${roleProfile.summary.length > 100 ? '...' : ''}`);
     }
 
-    // Step 3: Generate all files
-    const plugins = [];
+    // Step 2: Design plugin schema
+    appendLog(jobId, '◆ Designing plugin structure...');
+    const schemaResult = await designSchema(roleProfile, namespace, author, false);
+    const { primaryPlugin } = schemaResult;
 
-    appendLog(jobId, `→ Generating files for ${primaryPlugin.name || roleProfile.roleSlug}…`);
+    const cmdCount = primaryPlugin.commands?.length || 0;
+    const skillCount = primaryPlugin.skills?.length || 0;
+    const connCount = primaryPlugin.connectors?.length || 0;
+    appendLog(jobId, `✓ Structure ready`);
+    appendLog(jobId, `  · ${cmdCount} command${cmdCount !== 1 ? 's' : ''} planned`);
+    if (skillCount > 0) appendLog(jobId, `  · ${skillCount} skill area${skillCount !== 1 ? 's' : ''} planned`);
+    if (connCount > 0) appendLog(jobId, `  · ${connCount} tool connection${connCount !== 1 ? 's' : ''} found`);
+
+    // Step 3: Generate all files
+    appendLog(jobId, '◆ Writing plugin files...');
     const primaryFiles = await generateFiles(
       primaryPlugin,
       roleProfile,
       author,
       (msg) => appendLog(jobId, msg)
     );
-    plugins.push({ name: primaryPlugin.name || roleProfile.roleSlug, files: primaryFiles });
 
-    if (companionPlugin) {
-      appendLog(jobId, `→ Generating files for companion plugin ${companionPlugin.name}…`);
-      const companionProfile = {
-        ...roleProfile,
-        roleTitle: companionPlugin.name,
-        summary: `Companion plugin for ${roleProfile.teamServed || 'the team'}`,
-      };
-      const companionFiles = await generateFiles(
-        companionPlugin,
-        companionProfile,
-        author,
-        (msg) => appendLog(jobId, msg)
-      );
-      plugins.push({ name: companionPlugin.name, files: companionFiles });
-    }
+    const totalFiles = primaryFiles.length;
+    appendLog(jobId, `✓ All files written (${totalFiles} files)`);
 
     // Step 4: Package result
-    const result = packageResult(plugins);
-
-    const totalFiles = plugins.reduce((sum, p) => sum + p.files.length, 0);
-    appendLog(jobId, `✓ Done — ${totalFiles} files generated`);
+    appendLog(jobId, '◆ Packaging...');
+    const result = packageResult([{ name: primaryPlugin.name || roleProfile.roleSlug, files: primaryFiles }]);
+    appendLog(jobId, '✓ Done — your plugin is ready to download');
 
     writeStatus(jobId, {
       status: 'complete',
@@ -123,11 +119,10 @@ export const handler = async (event) => {
       result,
     });
   } catch (err) {
-    const current = readStatus(jobId);
     appendLog(jobId, `✗ Error: ${err.message}`);
     writeStatus(jobId, {
       status: 'error',
-      logs: current.logs || [],
+      logs: readStatus(jobId).logs,
       result: null,
       error: err.message,
     });
