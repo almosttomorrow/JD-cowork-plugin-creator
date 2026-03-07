@@ -54,7 +54,22 @@ function LogEntry({ line }) {
   );
 }
 
-export default function ProgressLog({ logs, running }) {
+function ProgressBar({ current, total }) {
+  const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  return (
+    <div className="build-progress">
+      <div className="build-progress-header">
+        <span className="build-progress-label">Building files</span>
+        <span className="build-progress-count">{current} / {total}</span>
+      </div>
+      <div className="build-progress-track">
+        <div className="build-progress-fill" style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+export default function ProgressLog({ logs, running, progress }) {
   const containerRef = useRef(null);
 
   // Scroll within the log box only — never force page scroll
@@ -65,16 +80,21 @@ export default function ProgressLog({ logs, running }) {
   }, [logs]);
 
   return (
-    <div className="progress-log" ref={containerRef}>
-      {logs.length === 0 && running && (
-        <div className="log-entry">
-          <span className="log-icon-step">◆</span>
-          <span className="log-text-step">Starting up...</span>
-        </div>
+    <div>
+      {progress && progress.total > 0 && (
+        <ProgressBar current={progress.current} total={progress.total} />
       )}
-      {logs.map((line, i) => (
-        <LogEntry key={i} line={line} />
-      ))}
+      <div className="progress-log" ref={containerRef}>
+        {logs.length === 0 && running && (
+          <div className="log-entry">
+            <span className="log-icon-step">◆</span>
+            <span className="log-text-step">Starting up...</span>
+          </div>
+        )}
+        {logs.map((line, i) => (
+          <LogEntry key={i} line={line} />
+        ))}
+      </div>
     </div>
   );
 }

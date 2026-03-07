@@ -15,7 +15,7 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
  * @param {object} pluginSchema  - The plugin schema from designSchema
  * @param {object} roleProfile   - The role profile from parseJD
  * @param {string} author        - Author name
- * @param {Function} onProgress  - Callback(message: string)
+ * @param {Function} onProgress  - async Callback(message: string)
  * @returns {Promise<Array<{path: string, content: string}>>}
  */
 export async function generateFiles(pluginSchema, roleProfile, author, onProgress) {
@@ -40,7 +40,7 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
       author: { name: author || 'PluginForge' },
     }, null, 2),
   });
-  onProgress(`✓ Generated .claude-plugin/plugin.json`);
+  await onProgress(`✓ Generated .claude-plugin/plugin.json`);
 
   // 3b. .mcp.json — map connectors through registry; omit unknowns
   const resolvedConnectors = {};
@@ -59,35 +59,35 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
     path: '.mcp.json',
     content: JSON.stringify({ mcpServers: resolvedConnectors }, null, 2),
   });
-  onProgress(`✓ Generated .mcp.json`);
+  await onProgress(`✓ Generated .mcp.json`);
 
   // 3c. Command files — one LLM call per command
   for (const cmd of commands) {
-    onProgress(`→ Generating commands/${cmd.name}.md…`);
+    await onProgress(`→ Generating commands/${cmd.name}.md…`);
     try {
       const content = await callClaude(
         COMMAND_SYSTEM,
         commandUser(cmd, namespace, roleTitle, summary)
       );
       files.push({ path: `commands/${cmd.name}.md`, content });
-      onProgress(`✓ Generated commands/${cmd.name}.md`);
+      await onProgress(`✓ Generated commands/${cmd.name}.md`);
     } catch (err) {
-      onProgress(`✗ Skipped commands/${cmd.name}.md (${err.message})`);
+      await onProgress(`✗ Skipped commands/${cmd.name}.md (${err.message})`);
     }
   }
 
   // 3d. Skill files — one LLM call per skill
   for (const skill of skills) {
-    onProgress(`→ Generating skills/${skill.name}/SKILL.md…`);
+    await onProgress(`→ Generating skills/${skill.name}/SKILL.md…`);
     try {
       const content = await callClaude(
         SKILL_SYSTEM,
         skillUser(skill, roleTitle, summary, domainKnowledge, regions, segments)
       );
       files.push({ path: `skills/${skill.name}/SKILL.md`, content });
-      onProgress(`✓ Generated skills/${skill.name}/SKILL.md`);
+      await onProgress(`✓ Generated skills/${skill.name}/SKILL.md`);
     } catch (err) {
-      onProgress(`✗ Skipped skills/${skill.name}/SKILL.md (${err.message})`);
+      await onProgress(`✗ Skipped skills/${skill.name}/SKILL.md (${err.message})`);
     }
   }
 
@@ -102,7 +102,7 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
   }
 
   // 3e. CONNECTORS.md — always generate; note unknown connectors
-  onProgress(`→ Generating CONNECTORS.md…`);
+  await onProgress(`→ Generating CONNECTORS.md…`);
   try {
     const knownKeys = Object.keys(resolvedConnectors);
     const allConnectors = [...knownKeys, ...unknownConnectors];
@@ -121,19 +121,19 @@ export async function generateFiles(pluginSchema, roleProfile, author, onProgres
     }
 
     files.push({ path: 'CONNECTORS.md', content });
-    onProgress(`✓ Generated CONNECTORS.md`);
+    await onProgress(`✓ Generated CONNECTORS.md`);
   } catch (err) {
-    onProgress(`✗ Skipped CONNECTORS.md (${err.message})`);
+    await onProgress(`✗ Skipped CONNECTORS.md (${err.message})`);
   }
 
   // 3f. README.md — one LLM call
-  onProgress(`→ Generating README.md…`);
+  await onProgress(`→ Generating README.md…`);
   try {
     const content = await callClaude(null, readmeUser(pluginSchema, roleTitle, summary));
     files.push({ path: 'README.md', content });
-    onProgress(`✓ Generated README.md`);
+    await onProgress(`✓ Generated README.md`);
   } catch (err) {
-    onProgress(`✗ Skipped README.md (${err.message})`);
+    await onProgress(`✗ Skipped README.md (${err.message})`);
   }
 
   return files;

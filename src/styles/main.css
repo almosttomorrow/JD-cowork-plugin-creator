@@ -539,6 +539,45 @@ textarea:disabled {
   line-height: 1.5;
 }
 
+/* ─── Build Progress Bar ─────────────────────────── */
+.build-progress {
+  margin-bottom: 10px;
+}
+
+.build-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.build-progress-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.build-progress-count {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.build-progress-track {
+  height: 6px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.build-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
 /* ─── Progress Log ───────────────────────────────── */
 .progress-log {
   background: var(--surface);

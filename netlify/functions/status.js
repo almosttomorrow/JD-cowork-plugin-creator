@@ -3,12 +3,10 @@
  * GET /api/status?jobId=xxx
  *
  * Returns the current status of a generation job.
- * Reads from /tmp/pluginforge-[jobId].json written by generate-background.
+ * Reads from Netlify Blobs written by generate-background.
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { getStore } from '@netlify/blobs';
 
 export const handler = async (event) => {
   const headers = {
@@ -36,20 +34,19 @@ export const handler = async (event) => {
     };
   }
 
-  const filePath = join(tmpdir(), `pluginforge-${safeJobId}.json`);
-
-  if (!existsSync(filePath)) {
-    // Job not yet initialized or doesn't exist
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ status: 'pending', logs: [] }),
-    };
-  }
-
   try {
-    const raw = readFileSync(filePath, 'utf8');
-    const data = JSON.parse(raw);
+    const store = getStore('plugin-status');
+    const data = await store.get(safeJobId, { type: 'json' });
+
+    if (!data) {
+      // Job not yet initialized or doesn't exist
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ status: 'pending', logs: [] }),
+      };
+    }
+
     return {
       statusCode: 200,
       headers,

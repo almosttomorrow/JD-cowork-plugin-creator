@@ -18,6 +18,7 @@ export default function App() {
 
   const [phase, setPhase] = useState('idle'); // idle | generating | complete | error
   const [logs, setLogs] = useState([]);
+  const [progress, setProgress] = useState(null); // { current, total } | null
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -36,6 +37,7 @@ export default function App() {
     stopPolling();
     setPhase('idle');
     setLogs([]);
+    setProgress(null);
     setResult(null);
     setErrorMsg('');
   };
@@ -44,6 +46,7 @@ export default function App() {
     if (!canGenerate) return;
     setPhase('generating');
     setLogs([]);
+    setProgress(null);
     setResult(null);
     setErrorMsg('');
 
@@ -60,6 +63,7 @@ export default function App() {
       try {
         const data = await pollStatus(jobId);
         if (data.logs) setLogs(data.logs);
+        if (data.progress) setProgress(data.progress);
         if (data.status === 'complete') {
           stopPolling();
           setResult(data.result);
@@ -148,7 +152,7 @@ export default function App() {
               <span className="spinner" /> Building plugin...
             </button>
             <div style={{ marginTop: 16 }}>
-              <ProgressLog logs={logs} running={true} />
+              <ProgressLog logs={logs} running={true} progress={progress} />
             </div>
           </>
         )}
