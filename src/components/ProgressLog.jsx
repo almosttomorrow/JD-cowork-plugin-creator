@@ -80,7 +80,7 @@ export default function ProgressLog({ logs, running, progress }) {
   }, [logs]);
 
   return (
-    <div>
+    <>
       {progress && progress.total > 0 && (
         <ProgressBar current={progress.current} total={progress.total} />
       )}
@@ -95,6 +95,6 @@ export default function ProgressLog({ logs, running, progress }) {
           <LogEntry key={i} line={line} />
         ))}
       </div>
-    </div>
+    </>
   );
 }

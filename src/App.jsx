@@ -62,8 +62,10 @@ export default function App() {
     pollRef.current = setInterval(async () => {
       try {
         const data = await pollStatus(jobId);
-        if (data.logs) setLogs(data.logs);
-        if (data.progress) setProgress(data.progress);
+        if (data.logs) setLogs(prev => data.logs.length > prev.length ? data.logs : prev);
+        if (data.progress) setProgress(prev =>
+          !prev || prev.current !== data.progress.current ? data.progress : prev
+        );
         if (data.status === 'complete') {
           stopPolling();
           setResult(data.result);

@@ -16,30 +16,6 @@ import { designSchema } from './lib/designSchema.js';
 import { generateFiles } from './lib/generateFiles.js';
 import { packageResult } from './lib/packageResult.js';
 
-function pluginStore() {
-  return getStore('plugin-status');
-}
-
-async function readStatus(jobId) {
-  try {
-    const data = await pluginStore().get(jobId, { type: 'json' });
-    return data || { status: 'processing', logs: [], result: null, progress: null };
-  } catch {
-    return { status: 'processing', logs: [], result: null, progress: null };
-  }
-}
-
-async function writeStatus(jobId, data) {
-  await pluginStore().setJSON(jobId, data);
-}
-
-async function appendLog(jobId, line, progress) {
-  const current = await readStatus(jobId);
-  current.logs = [...(current.logs || []), line];
-  if (progress !== undefined) current.progress = progress;
-  await writeStatus(jobId, current);
-}
-
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -58,12 +34,27 @@ export const handler = async (event) => {
     return { statusCode: 400, body: 'Missing required fields: jd, namespace, jobId' };
   }
 
-  // Initialize status blob immediately
-  await writeStatus(jobId, { status: 'processing', logs: [], result: null, progress: null });
+  const store = getStore('plugin-status');
+
+  // In-memory job state — no read-before-write needed, single source of truth
+  const job = { status: 'processing', logs: [], result: null, progress: null };
+
+  const flush = (updates = {}) => {
+    Object.assign(job, updates);
+    return store.setJSON(jobId, job);
+  };
+
+  const log = (line, progress) => {
+    job.logs.push(line);
+    if (progress !== undefined) job.progress = progress;
+    return store.setJSON(jobId, job);
+  };
+
+  await flush(); // Initialize status blob
 
   try {
     // Step 0: Verify OpenAI connection
-    await appendLog(jobId, '◆ Connecting to OpenAI...');
+    await log('◆ Connecting to OpenAI...');
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const testCompletion = await client.chat.completions.create({
       model: 'gpt-4o',
@@ -71,31 +62,31 @@ export const handler = async (event) => {
       messages: [{ role: 'user', content: 'ping' }],
     });
     if (!testCompletion.choices?.[0]) throw new Error('No response from OpenAI');
-    await appendLog(jobId, '✓ Connected (gpt-4o ready)');
+    await log('✓ Connected (gpt-4o ready)');
 
     // Step 1: Parse JD
-    await appendLog(jobId, '◆ Reading job description...');
+    await log('◆ Reading job description...');
     const roleProfile = await parseJD(jd);
-    await appendLog(jobId, `✓ Role identified: ${roleProfile.roleTitle}`);
+    await log(`✓ Role identified: ${roleProfile.roleTitle}`);
     if (roleProfile.summary) {
-      await appendLog(jobId, `  · ${roleProfile.summary.slice(0, 100)}${roleProfile.summary.length > 100 ? '...' : ''}`);
+      await log(`  · ${roleProfile.summary.slice(0, 100)}${roleProfile.summary.length > 100 ? '...' : ''}`);
     }
 
     // Step 2: Design plugin schema
-    await appendLog(jobId, '◆ Designing plugin structure...');
+    await log('◆ Designing plugin structure...');
     const schemaResult = await designSchema(roleProfile, namespace, author, false);
     const { primaryPlugin } = schemaResult;
 
     const cmdCount = primaryPlugin.commands?.length || 0;
     const skillCount = primaryPlugin.skills?.length || 0;
     const connCount = primaryPlugin.connectors?.length || 0;
-    await appendLog(jobId, `✓ Structure ready`);
-    await appendLog(jobId, `  · ${cmdCount} command${cmdCount !== 1 ? 's' : ''} planned`);
-    if (skillCount > 0) await appendLog(jobId, `  · ${skillCount} skill area${skillCount !== 1 ? 's' : ''} planned`);
-    if (connCount > 0) await appendLog(jobId, `  · ${connCount} tool connection${connCount !== 1 ? 's' : ''} found`);
+    await log(`✓ Structure ready`);
+    await log(`  · ${cmdCount} command${cmdCount !== 1 ? 's' : ''} planned`);
+    if (skillCount > 0) await log(`  · ${skillCount} skill area${skillCount !== 1 ? 's' : ''} planned`);
+    if (connCount > 0) await log(`  · ${connCount} tool connection${connCount !== 1 ? 's' : ''} found`);
 
     // Step 3: Generate all files
-    await appendLog(jobId, '◆ Writing plugin files...');
+    await log('◆ Writing plugin files...');
 
     // Total: plugin.json + .mcp.json + commands + skills + CONNECTORS.md + README.md
     const totalFiles = 2 + cmdCount + skillCount + 2;
@@ -106,39 +97,27 @@ export const handler = async (event) => {
       roleProfile,
       author,
       async (msg) => {
-        if (msg.startsWith('✓ Generated')) {
+        // Count both successes and skips so the bar always reaches 100%
+        if (msg.startsWith('✓ Generated') || msg.startsWith('✗ Skipped')) {
           filesBuilt++;
-          await appendLog(jobId, msg, { current: filesBuilt, total: totalFiles });
+          await log(msg, { current: filesBuilt, total: totalFiles });
         } else {
-          await appendLog(jobId, msg);
+          await log(msg);
         }
       }
     );
 
-    const totalFilesActual = primaryFiles.length;
-    await appendLog(jobId, `✓ All files written (${totalFilesActual} files)`);
+    await log(`✓ All files written (${primaryFiles.length} files)`);
 
     // Step 4: Package result
-    await appendLog(jobId, '◆ Packaging...');
+    await log('◆ Packaging...');
     const result = packageResult([{ name: primaryPlugin.name || roleProfile.roleSlug, files: primaryFiles }]);
-    await appendLog(jobId, '✓ Done — your plugin is ready to download');
+    await log('✓ Done — your plugin is ready to download');
 
-    const finalStatus = await readStatus(jobId);
-    await writeStatus(jobId, {
-      status: 'complete',
-      logs: finalStatus.logs,
-      result,
-      progress: { current: totalFiles, total: totalFiles },
-    });
+    await flush({ status: 'complete', result, progress: { current: filesBuilt, total: filesBuilt } });
   } catch (err) {
-    await appendLog(jobId, `✗ Error: ${err.message}`);
-    const errStatus = await readStatus(jobId);
-    await writeStatus(jobId, {
-      status: 'error',
-      logs: errStatus.logs,
-      result: null,
-      error: err.message,
-    });
+    await log(`✗ Error: ${err.message}`);
+    await flush({ status: 'error', error: err.message });
     console.error('[generate-background] Error:', err);
   }
 
